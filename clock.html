@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>clock</title>
+    <style>
+        /* 時鐘整體 */
+        .clock {
+            position: relative;
+            width: 400px;
+            height: 400px;
+            background: linear-gradient(90deg, lightskyblue, lightpink);
+            border-radius: 50%;
+            margin: 100px 0 100px 100px;
+        }
+
+        /* 中心 */
+        .hand {
+            position: absolute;
+            top: 200px;
+            left: 200px;
+        }
+
+        /* 秒針 */
+        .s-hand {
+            position: absolute;
+            top: -170px;
+            left: -1px;
+            width: 2px;
+            height: 170px;
+            background-color: #000;
+        }
+
+        /* 分針 */
+        .m-hand {
+            position: absolute;
+            top: -120px;
+            left: -2px;
+            width: 4px;
+            height: 120px;
+            border-radius: 4px;
+            background-color: #000;
+        }
+
+        /* 時針 */
+        .h-hand {
+            position: absolute;
+            top: -60px;
+            left: -3px;
+            width: 6px;
+            height: 60px;
+            border-radius: 6px;
+            background-color: #000;
+        }
+
+        /* 刻度外層 */
+        .scale {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* 刻度 */
+        .scale_unit {
+            position: absolute;
+            transform: rotate(180deg) translateY(180px);
+            transform-origin: 0 0;
+            top: 50%;
+            left: 50%;
+            width: 2px;
+            height: 10px;
+            background-color: #fff;
+        }
+
+        /* 12小時制 / 24小時制 */
+        .twelve,
+        .twenty {
+            font-size: 14px;
+            position: absolute;
+            left: -5px;
+            transform: rotate(180deg)
+        }
+
+        .twelve {
+            top: -25px;
+        }
+
+        .twenty {
+            top: 35px;
+        }
+
+        /* 電子時鐘 */
+        .electronic_clock {
+            margin: 0 240px;
+            font-size: 30px;
+            background: linear-gradient(lavender, purple);
+            padding: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 時鐘整體 -->
+    <div class="clock">
+        <!-- 秒針 -->
+        <div class="hand secHand">
+            <div class="s-hand"></div>
+        </div>
+        <!-- 分針 -->
+        <div class="hand minHand">
+            <div class="m-hand"></div>
+        </div>
+        <!-- 時針 -->
+        <div class="hand hourHand">
+            <div class="h-hand"></div>
+        </div>
+        <!-- 刻度 -->
+        <div class="scale">
+            <div class="scale_unit"></div>
+        </div>
+    </div>
+    <!-- 電子時鐘 -->
+    <span class="electronic_clock"></span>
+
+
+    <script>
+        const secHand = document.querySelector('.secHand');
+        const minHand = document.querySelector('.minHand');
+        const hourHand = document.querySelector('.hourHand');
+        const unit_wrap = document.querySelector('.scale');
+        const electronic_clock = document.querySelector('.electronic_clock');
+
+        // 指針轉動
+        const clockRun = () => {
+            let now = new Date();
+            s = now.getSeconds();
+            m = now.getMinutes();
+            h = now.getHours();
+
+            // now.getMilliseconds() * 0.006  讓秒針等速跑
+            // 秒 = 1 * 6度 = 6
+            // 毫秒 = 1000 * 0.006度 = 6
+            secHand.style.transform = `rotate(${s * 6 + now.getMilliseconds() * 0.006}deg)`;
+
+            minHand.style.transform = `rotate(${m * 6}deg)`;
+            // m * 0.5 讓時針慢慢前進
+            // h = 1 * 30度 = 30
+            // m = 60 * 0.5度 = 30
+            hourHand.style.transform = `rotate(${h * 30 + m * 0.5}deg)`;
+
+            // 調用毫秒設低一些,秒針才會持續走
+            setTimeout(clockRun, 30)
+        }
+        clockRun();
+
+
+        let twelve_hours = 0; // 12小時制
+        let twenty_hours = 12; // 24小時制
+
+        // 刻度與數字
+        const renderClockUnit = () => {
+            // 刻度
+            let deg = 180; // 刻度的旋轉角度，180度為12時的位置
+
+            // 總共60個刻度
+            for (let i = 0; i < 60; i++) {
+                const unit = document.createElement('div');
+                unit.className = 'scale_unit';
+
+                if (i % 5 == 0) {
+                    // 小時的刻度
+                    unit.style.transform = `rotate(${deg}deg) translateY(170px)`;
+                    unit.style.width = `4px`;
+                    unit.style.height = `20px`;
+                } else {
+                    // 其他的刻度
+                    unit.style.transform = `rotate(${deg}deg) translateY(180px)`;
+                }
+
+                deg += 6;
+                unit_wrap.appendChild(unit);
+
+                // 小時的數字生成
+                if (i % 5 == 0) {
+                    unit.innerHTML = `
+                    <span class="twelve"> ${i == 0 ? 12 : twelve_hours}</span>
+                    <span class="twenty"> ${i == 0 ? 24 : twenty_hours}</span>
+                `;
+                    twelve_hours++;
+                    twenty_hours++;
+                }
+            }
+        }
+        renderClockUnit();
+
+        // 電子時鐘
+        const electronic_clockRun = () => {
+            let now = new Date();
+            // 數字為個位數就在前面加0
+            s = now.getSeconds();
+            s = s >= 10 ? s : '0' + s;
+            m = now.getMinutes();
+            m = m >= 10 ? m : '0' + m;
+            h = now.getHours();
+            h = h >= 10 ? h : '0' + h;
+
+            electronic_clock.innerHTML = h + ':' + m + ':' + s
+
+            setTimeout(electronic_clockRun, 1000)
+        }
+        electronic_clockRun();
+
+    </script>
+
+
+
+</body>
+
+</html>
